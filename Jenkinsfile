@@ -14,7 +14,6 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    credentialsId: 'github-creds',
                     url: 'https://github.com/akashsubramanian03/cloudship-app.git'
             }
         }
@@ -60,18 +59,10 @@ pipeline {
                 sshagent(['ec2-ssh-key']) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ubuntu@35.154.112.60 "
-                            echo 'Stopping existing container...'
                             docker stop \$(docker ps -q) || true &&
                             docker rm \$(docker ps -aq) || true &&
-
-                            echo 'Logging into ECR...'
-                            aws ecr get-login-password --region ap-south-1 \
-                            | docker login --username AWS --password-stdin 793873033616.dkr.ecr.ap-south-1.amazonaws.com &&
-
-                            echo 'Pulling latest image...'
+                            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 793873033616.dkr.ecr.ap-south-1.amazonaws.com &&
                             docker pull 793873033616.dkr.ecr.ap-south-1.amazonaws.com/cloudship-app:latest &&
-
-                            echo 'Starting container on port 9090...'
                             docker run -d -p 9090:8080 793873033616.dkr.ecr.ap-south-1.amazonaws.com/cloudship-app:latest
                         "
                     '''
